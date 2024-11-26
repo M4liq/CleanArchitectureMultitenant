@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  webapi:
+    image: ${DOCKER_REGISTRY-}webapi
+    build:
+      context: .
+      dockerfile: Backend/WebApi/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://*:80
+      - PATH_TYPE=Slash
+      - "DatabaseSettings:ConnectionString=Server=mssql;Database=PapaHoraDb;User=sa;Password=SuperP4ssw0rd!"
+      - "SmtpClientSettings:Host=mailhog"
+    ports:
+      - "8000:80"
+    volumes:
+      - ~/.aspnet/https:/root/.aspnet/https:ro
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+    depends_on: 
+      - mssql
+  mssql:
+    image: 'mcr.microsoft.com/mssql/server'
+    hostname: 'mssql'
+    ports:
+      - 1433:1433
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SuperP4ssw0rd!
+      - MSSQL_PID=Express
+  sqlpad:
+    image: sqlpad/sqlpad:5
+    hostname: 'sqlpad'
+    ports:
+      - '3000:3000'
+    environment:
+      SQLPAD_ADMIN: 'JohnPoul2'
+      SQLPAD_ADMIN_PASSWORD: 'SuperP4ssw0rd!'
+      SQLPAD_APP_LOG_LEVEL: info
+      SQLPAD_WEB_LOG_LEVEL: warn
+      SQLPAD_CONNECTIONS__sqlserverdemo__name: SqlServer
+      SQLPAD_CONNECTIONS__sqlserverdemo__driver: sqlserver
+      SQLPAD_CONNECTIONS__sqlserverdemo__host: mssql
+      SQLPAD_CONNECTIONS__sqlserverdemo__database: Db
+      SQLPAD_CONNECTIONS__sqlserverdemo__username: sa
+      SQLPAD_CONNECTIONS__sqlserverdemo__password: SuperP4ssw0rd!
+    volumes:
+      - sqlpad-volume:/var/lib/sqlpad
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: always
+    ports:
+      - 1025:1025
+      - 8025:8025
+volumes:
+  sqlpad-volume:
