@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace Domain.Common;
+namespace Domain.Common.Base;
 
 public record BaseResponse
 {

@@ -1,7 +1,6 @@
-﻿namespace Application.Common.Interfaces.Settings;
+﻿namespace Application.Common.Settings;
 
 public interface IErrorsAndMessagesSettings
 {
-    public string DefaultErrorLanguageCode { get; set; }
-    public string DefaultMessageLanguageCode { get; set; }
+    public string DefaultLanguageCode { get; set; }
 }

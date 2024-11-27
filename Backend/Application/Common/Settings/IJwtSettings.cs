@@ -1,4 +1,4 @@
-﻿namespace Application.Common.Interfaces.Settings;
+﻿namespace Application.Common.Settings;
 
 public interface IJwtSettings
 {

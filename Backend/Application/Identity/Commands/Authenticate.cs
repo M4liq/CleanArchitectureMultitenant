@@ -2,11 +2,11 @@
 using System.Security.Claims;
 using System.Text;
 using Application.Common;
-using Application.Common.Interfaces;
-using Application.Common.Interfaces.Core;
-using Application.Common.Interfaces.Settings;
-using Domain.Common;
-using Domain.Identity;
+using Application.Common.Core;
+using Application.Common.Settings;
+using Domain.Common.Base;
+using Domain.Identity.RefreshToken;
+using Domain.Identity.User;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -15,7 +15,7 @@ namespace Application.Identity.Commands;
 
 public class Authenticate
 {
-    public record AuthenticateCommand(ApplicationUserEntity User) : IRequest<AuthenticateResponse>;
+    public record AuthenticateCommand(UserEntity User) : IRequest<AuthenticateResponse>;
 
     public class Handler : IRequestHandler<AuthenticateCommand, AuthenticateResponse>
     {
@@ -63,10 +63,7 @@ public class Authenticate
                 Token = Guid.NewGuid(),
                 JwtId = token.Id,
                 UserId = request.User.Id,
-                CreatedDate = DateTime.UtcNow,
-                ExpiryDate = DateTime.UtcNow.Add(_jwtSettings.RefreshTokenLifeTime),
-                CreatedUserId = request.User.Id,
-                LastModifiedUserId = request.User.Id
+                ExpiryDate = DateTime.UtcNow.Add(_jwtSettings.RefreshTokenLifeTime)
             };
 
             await _context.RefreshTokens.AddAsync(refreshToken, cancellationToken);

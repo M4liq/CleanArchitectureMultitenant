@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces.Settings;
+﻿using Application.Common.Settings;
 
 namespace Infrastructure.Settings;
 

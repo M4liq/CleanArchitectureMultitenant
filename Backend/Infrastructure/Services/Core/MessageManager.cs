@@ -1,6 +1,8 @@
-﻿using Application.Common.Interfaces.Core;
-using Application.Common.Interfaces.Settings;
+﻿using Application.Common.Core;
+using Application.Common.Settings;
 using Domain.Common;
+using Domain.Common.Base;
+using Domain.Common.Interfaces;
 
 namespace Infrastructure.Services.Core;
 
@@ -17,7 +19,7 @@ public class MessageManager : IMessageManager
     {
         var error = new T();
 
-        if (string.Equals("en", _errorsAndMessagesSettings.DefaultMessageLanguageCode,
+        if (string.Equals("en", _errorsAndMessagesSettings.DefaultLanguageCode,
                 StringComparison.OrdinalIgnoreCase))
         {
             return new List<string> {error.DefaultMessageEn};

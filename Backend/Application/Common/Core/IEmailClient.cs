@@ -1,6 +1,6 @@
 ﻿using Application.Common.Dtos;
 
-namespace Application.Common.Interfaces.Core;
+namespace Application.Common.Core;
 
 public interface IEmailClient
 {

@@ -1,6 +1,7 @@
-﻿using Domain.Common;
+﻿using Domain.Common.Base;
+using Domain.Common.Interfaces;
 
-namespace Application.Common.Interfaces.Core;
+namespace Application.Common.Core;
 
 public interface IMessageManager
 {

@@ -1,10 +1,7 @@
-namespace Application.Common.Interfaces.Core;
+namespace Application.Common.Core;
 
 public interface ITenantProvider
 {
-    public string TenantName { get; }
-
-    public string ConnectionString { get; }
-
-    public Task SetTenantAsync(string tenantName);
+    Guid? TenantId { get; }
+    void SetTenant(Guid tenantId);
 }

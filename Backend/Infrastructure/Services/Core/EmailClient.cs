@@ -1,6 +1,6 @@
-﻿using Application.Common.Dtos;
-using Application.Common.Interfaces.Core;
-using Application.Common.Interfaces.Settings;
+﻿using Application.Common.Core;
+using Application.Common.Dtos;
+using Application.Common.Settings;
 using Infrastructure.Settings;
 using MailKit.Net.Smtp;
 using MimeKit;

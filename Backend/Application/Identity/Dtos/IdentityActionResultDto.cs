@@ -1,4 +1,4 @@
-﻿namespace Application.Common.Dtos;
+﻿namespace Application.Identity.Dtos;
 
 public class IdentityActionResultDto
 {

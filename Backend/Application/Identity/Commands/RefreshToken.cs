@@ -1,10 +1,8 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using Application.Common;
-using Application.Common.Interfaces;
-using Application.Common.Interfaces.Core;
-using Application.Common.Interfaces.Services;
-using Domain.Common;
-using Domain.Identity;
+using Application.Common.Core;
+using Domain.Common.Base;
+using Domain.Identity.RefreshToken;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -82,28 +80,26 @@ public static class RefreshToken
     public class Handler : IRequestHandler<RefreshTokenCommand, RefreshTokenResponse>
     {
         private readonly IMediator _mediator;
-        private readonly IApplicationUserManager _userManager;
         private readonly IDataContext _context;
 
-        public Handler(IMediator mediator, IApplicationUserManager userManager, IDataContext context)
+        public Handler(IMediator mediator, IDataContext context)
         {
             _mediator = mediator;
-            _userManager = userManager;
             _context = context;
         }
 
         public async Task<RefreshTokenResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
             var storedRefreshToken =
-                await _context.RefreshTokens.SingleOrDefaultAsync(
+                await _context.RefreshTokens.SingleAsync(
                     _ => _.Token.ToString() == request.requestRefreshToken, cancellationToken: cancellationToken);
 
             storedRefreshToken.Used = true;
 
             _context.RefreshTokens.Update(storedRefreshToken);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
-            var user = await _userManager.FindByIdAsync(storedRefreshToken.UserId);
+            var user = await _context.Users.SingleAsync(_ => _.Id == storedRefreshToken.UserId ,cancellationToken: cancellationToken);
 
             var result = await _mediator.Send(new Authenticate.AuthenticateCommand(user), cancellationToken);
 

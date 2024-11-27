@@ -1,6 +1,6 @@
-﻿using Application.Common.Interfaces.Core;
+﻿using Domain.Common.Interfaces;
 
-namespace Domain.Identity;
+namespace Domain.Identity.RefreshToken;
 
 public static class  ApplicationRefreshTokenDomainErrors
 {

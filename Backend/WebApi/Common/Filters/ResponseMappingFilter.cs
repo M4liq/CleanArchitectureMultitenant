@@ -1,10 +1,10 @@
 ﻿using System.Net;
-using Domain.Common;
+using Domain.Common.Base;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using WebApi.Common.Models;
 
-namespace WebApi.Filters;
+namespace WebApi.Common.Filters;
 
 public class ResponseMappingFilter : IActionFilter
 {

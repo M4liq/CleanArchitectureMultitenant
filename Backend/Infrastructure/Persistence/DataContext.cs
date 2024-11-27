@@ -1,40 +1,84 @@
-﻿using Application.Common;
-using Application.Common.Interfaces;
-using Domain.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Application.Common;
+using Application.Common.Core;
+using Domain.Common.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence;
 
- public class DataContext : 
-     IdentityDbContext<ApplicationUserEntity, ApplicationRoleEntity, Guid, ApplicationUserClaimsEntity,
-     ApplicationUserRolesEntity, ApplicationUserLoginsEntity, ApplicationRoleClaimsEntity, ApplicationUserTokensEntity>, IDataContext
- {
-        public DataContext(DbContextOptions<DataContext> options)
-            : base(options)
-        {
-        }
+public partial class DataContext : DbContext, IDataContext
+{
+   private readonly ICalendar _calendarService;
+   private readonly ICurrentUser _currentUserService;
 
-        public DataContext()
-        {
-        }
+   public DataContext(
+       DbContextOptions<DataContext> options,
+       ITenantProvider tenantProvider,
+       ICalendar calendarService,
+       ICurrentUser currentUserService) : base(options)
+   {
+       _tenantProvider = tenantProvider;
+       _calendarService = calendarService;
+       _currentUserService = currentUserService;
+   }
 
-        public DbSet<ApplicationRefreshTokensEntity> RefreshTokens { get; set; }
-        
-        public async Task<bool> SaveChangesAsync()
-        {
-             var changes = await base.SaveChangesAsync();
-             return changes > 0;
-        }
+   public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+   {
+       var currentUserId = GetCurrentUserId();
+       var currentTenantId = GetCurrentTenantId();
+       
+       HandleEntityTracking(currentUserId, currentTenantId);
+       ValidateEntities();
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseLazyLoadingProxies();
-        }
+       return await base.SaveChangesAsync(cancellationToken);
+   }
+   
+   public override int SaveChanges()
+   {
+       var currentUserId = GetCurrentUserId();
+       var currentTenantId = GetCurrentTenantId();
+       
+       HandleEntityTracking(currentUserId, currentTenantId);
+       ValidateEntities();
 
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            base.OnModelCreating(builder);
-            builder.ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
-        }
-    }
+       return base.SaveChanges();
+   }
+
+   private void HandleEntityTracking(Guid currentUserId, Guid currentTenantId)
+   {
+       foreach (var entry in ChangeTracker.Entries<ITrackingEntity>().ToList())
+       {
+           switch (entry.State)
+           {
+               case EntityState.Added:
+                   entry.Entity.SetCreationTracking(
+                       currentUserId,
+                       _calendarService.UtcNowOffset,
+                       currentTenantId);
+                   break;
+
+               case EntityState.Modified:
+                   if (entry.Property(nameof(ITrackingEntity.IsDeleted)).IsModified
+                       && (entry.Entity).IsDeleted)
+                   {
+                       (entry.Entity).SetDeletionTracking(
+                           currentUserId,
+                           _calendarService.UtcNowOffset);
+                   }
+                   else
+                   {
+                       entry.Entity.SetModificationTracking(
+                           currentUserId,
+                           _calendarService.UtcNowOffset);
+                   }
+                   break;
+
+               case EntityState.Deleted:
+                   entry.State = EntityState.Modified;
+                   (entry.Entity).SetDeletionTracking(
+                       currentUserId,
+                       _calendarService.UtcNowOffset);
+                   break;
+           }
+       }
+   }
+}

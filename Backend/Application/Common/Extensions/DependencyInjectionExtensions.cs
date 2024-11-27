@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces.Core;
+﻿using Application.Common.Core;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application.Common.Extensions;

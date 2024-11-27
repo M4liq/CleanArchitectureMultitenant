@@ -1,5 +1,5 @@
 using System.Net;
-using Application.Common.Interfaces.Core;
+using Application.Common.Core;
 using Microsoft.AspNetCore.Http;
 
 namespace Infrastructure.Middleware;
@@ -15,23 +15,23 @@ public class MultiTenantMiddleware : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var tenant = "testTenant";
-
-        if (string.IsNullOrEmpty(tenant))
+        var success = context.Request.Headers.TryGetValue("X-TenantId", out var tenantId);
+        
+        if (!success)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync("Invalid request: Unable to identify the tenant subdomain.");
+            await context.Response.WriteAsync("Could not get tenant id.");
             return;
         }
 
         try
         {
-            await _tenantProvider.SetTenantAsync(tenant);
+            _tenantProvider.SetTenant(Guid.Parse(tenantId));
         }
-        catch (Exception e)
+        catch (Exception)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync(e.Message);
+            await context.Response.WriteAsync("Invalid tenant id.");
             return;
         }
         

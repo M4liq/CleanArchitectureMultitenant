@@ -1,7 +1,16 @@
+using System.Text.Json;
+using Application;
+using Domain.Identity.ApiClient;
+using FastEndpoints;
+using FastEndpoints.Swagger;
+using Infrastructure;
+using Infrastructure.Middleware;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.OpenApi.Models;
+using NSwag;
 
 namespace WebApi;
 
@@ -9,22 +18,59 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        var host = Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); }).Build();
+        var builder = WebApplication.CreateBuilder(args);
 
-        if (IsDevelopmentEnvironment())
+        builder.Services.AddFastEndpoints();
+
+        builder.Services.SwaggerDocument(o =>
         {
-            RunDbMigration(host);
+            o.EnableJWTBearerAuth = true;
+            o.DocumentSettings = s =>
+            {
+                s.AddAuth("ApiKey", new()
+                {
+                    Name = "X-Api-Key",
+                    In = OpenApiSecurityApiKeyLocation.Header,
+                    Type = OpenApiSecuritySchemeType.ApiKey,
+                });
+            };
+        });
+        
+        builder.Services.AddApplication();
+        builder.Services.AddInfrastructure(builder.Configuration);
+
+        var app = builder.Build();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseOpenApi();
+            app.UseSwaggerUi();
         }
 
-        host.Run();
+        app.UseHttpsRedirection();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.UseMiddleware<MultiTenantMiddleware>();
+
+        app.UseFastEndpoints(c =>
+        {
+            c.Endpoints.RoutePrefix = "api";
+            c.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
+
+        if (app.Environment.IsDevelopment())
+        {
+            RunDbMigration(app);
+        }
+
+        app.Run();
     }
 
-    private static bool IsDevelopmentEnvironment() =>
-        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
-
-    private static void RunDbMigration(IHost host)
+    private static void RunDbMigration(WebApplication app)
     {
-        using var scope = host.Services.CreateScope();
+        using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
         var logger = services.GetRequiredService<ILogger<Program>>();
 
@@ -32,21 +78,52 @@ public class Program
         {
             var context = services.GetService<DataContext>();
 
-            if (((RelationalDatabaseCreator)context.GetService<IDatabaseCreator>()).Exists())
+            bool isNewDatabase = !((RelationalDatabaseCreator)context.GetService<IDatabaseCreator>()).Exists();
+
+            if (isNewDatabase)
+            {
+                logger.LogInformation("Database instance does not exist. Creating new one ...");
+                context.Database.Migrate();
+                logger.LogInformation("Database created successfully.");
+
+                // Seed default API client
+                CreateDefaultApiClient(context, logger);
+            }
+            else
             {
                 logger.LogInformation("Database already exists. Running program with no migration.");
-                return;
             }
-
-            logger.LogInformation("Database instance does not exist. Creating new one ...");
-
-            context.Database.Migrate();
-
-            logger.LogInformation("Database created successfully.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while migrating the DB.");
         }
-    }        
+    }
+
+    private static void CreateDefaultApiClient(DataContext context, ILogger logger)
+    {
+        try
+        {
+            using (context.UseSystemContext())
+            {
+                var allScopes = Scope.GetAllScopes().ToList();
+                var apiKey = Guid.NewGuid().ToString("N");
+
+                var defaultClient = ApiClientEntity.Create(
+                    "Default System Client",
+                    apiKey,
+                    allScopes
+                );
+
+                context.Set<ApiClientEntity>().Add(defaultClient);
+                context.SaveChanges();
+
+                logger.LogInformation("Default API client created successfully.");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to create default API client.");
+        }
+    }
 }

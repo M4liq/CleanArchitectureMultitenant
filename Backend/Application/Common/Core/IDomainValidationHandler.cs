@@ -1,6 +1,6 @@
-﻿using Domain.Common;
+﻿using Domain.Common.Base;
 
-namespace Application.Common.Interfaces.Core;
+namespace Application.Common.Core;
 
 public interface IDomainValidationHandler { }
 

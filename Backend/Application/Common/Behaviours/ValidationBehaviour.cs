@@ -1,6 +1,6 @@
 ﻿using System.Net;
-using Application.Common.Interfaces.Core;
-using Domain.Common;
+using Application.Common.Core;
+using Domain.Common.Base;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

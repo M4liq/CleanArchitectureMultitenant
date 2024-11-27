@@ -1,6 +1,7 @@
-﻿using Domain.Common;
+﻿using Domain.Common.Base;
+using Domain.Identity.User;
 
-namespace Domain.Identity;
+namespace Domain.Identity.RefreshToken;
 
 public class ApplicationRefreshTokensEntity : BaseEntity
 {
@@ -9,6 +10,6 @@ public class ApplicationRefreshTokensEntity : BaseEntity
     public string JwtId { get; set; }
     public Guid Token { get; set; }
     public bool Used { get; set; }
-    public virtual ApplicationUserEntity User { get; set; }
+    public virtual UserEntity User { get; set; }
     public Guid UserId { get; set; }
 }

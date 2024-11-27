@@ -1,4 +1,4 @@
-﻿using Domain.Common;
+﻿using Domain.Common.Base;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -11,16 +11,25 @@ public abstract class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T> w
         builder.HasKey(_ => _.Id);
         builder.HasIndex(_ => _.Id);
 
-        builder.HasOne(_ => _.CreatedBy)
-            .WithMany()
-            .HasForeignKey(_ => _.CreatedUserId)
-            .OnDelete(DeleteBehavior.NoAction)
+        builder
+            .Property(_ => _.CreatedDate)
             .IsRequired();
 
-        builder.HasOne(_ => _.LastModifiedBy)
-            .WithMany()
-            .HasForeignKey(_ => _.LastModifiedUserId)
-            .OnDelete(DeleteBehavior.NoAction)
+        builder
+            .Property(_ => _.CreatedByUserId)
             .IsRequired();
+
+        builder
+            .Property(_ => _.LastModifiedDate)
+            .IsRequired();
+
+        builder
+            .Property(_ => _.LastModifiedByUserId)
+            .IsRequired();
+
+        builder.Property(_ => _.TenantId)
+            .IsRequired();
+        
+        builder.HasIndex(_ => _.TenantId);
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Application.Common.Interfaces.Core;
+﻿namespace Domain.Common.Interfaces;
 
 public interface IDomainMessage
 {

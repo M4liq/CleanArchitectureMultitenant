@@ -10,11 +10,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddMediatR(Assembly.GetExecutingAssembly());
+        services.AddMediatR(cfg => {
+            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+            
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
+        });
+
         services.AddValidators();
         services.AddLogging();
-
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
         
         return services;
     }
