@@ -1,4 +1,5 @@
 using Domain.Common.Base;
+using Domain.Identity.Scope;
 
 namespace Domain.Identity.ApiClient;
 
@@ -6,34 +7,28 @@ public class ApiClientEntity : BaseEntity
 {
     public string Name { get; private set; }
     public string ApiKey { get; private set; }
-    private List<string> _allowedScopes = new();
+    public bool IsSystem { get; private set; }
+    private readonly List<ScopeEntity> _scopes = new();
+    public virtual IReadOnlyCollection<ScopeEntity> Scopes => _scopes.AsReadOnly();
     
-    public IReadOnlyCollection<string> AllowedScopes => _allowedScopes.AsReadOnly();
-
-    private ApiClientEntity() { } // For EF
-
-    public static ApiClientEntity Create(string name, string apiKey, IEnumerable<Scope> allowedScopes)
+    public static ApiClientEntity Create(string name, string apiKey, IEnumerable<ScopeValueObject> scopes,
+        bool isSystem)
     {
-        return new ApiClientEntity
+        var entity = new ApiClientEntity
         {
             Name = name,
             ApiKey = apiKey,
-            _allowedScopes = allowedScopes.Select(s => s.Value).ToList()
+            IsSystem = isSystem
         };
+
+        foreach (var scope in scopes)
+        {
+            entity._scopes.Add(ScopeEntity.Create(entity.Id, scope));
+        }
+
+        return entity;
     }
 
-    public bool HasScope(Scope scope) => _allowedScopes.Contains(scope.Value);
-    
-    public void AddScope(Scope scope)
-    {
-        if (!_allowedScopes.Contains(scope.Value))
-        {
-            _allowedScopes.Add(scope.Value);
-        }
-    }
-    
-    public void RemoveScope(Scope scope)
-    {
-        _allowedScopes.Remove(scope.Value);
-    }
+    public bool HasScope(Scope.ScopeValueObject scopeValueObject) =>
+        _scopes.Any(s => s.ScopeValue == scopeValueObject.Value);
 }

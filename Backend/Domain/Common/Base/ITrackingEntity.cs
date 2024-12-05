@@ -3,12 +3,12 @@ namespace Domain.Common.Base;
 public interface ITrackingEntity
 {
     DateTimeOffset CreatedDate { get; }
-    Guid CreatedByUserId { get; }
+    Guid CreatedById { get; }
     DateTimeOffset LastModifiedDate { get; }
-    Guid LastModifiedByUserId { get; }
+    Guid LastModifiedById { get; }
     Guid TenantId { get; }
     bool IsDeleted { get; }
-    Guid? DeletedByUserId { get; }
+    Guid? DeletedById { get; }
     DateTimeOffset? DeletedDate { get; }
 
     void SetModificationTracking(Guid userId, DateTimeOffset modifiedDate);

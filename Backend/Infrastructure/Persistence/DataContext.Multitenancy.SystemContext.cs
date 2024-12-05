@@ -24,14 +24,6 @@ public partial class DataContext
             SystemContextConfiguration.SystemUserId);
         return new SystemContextScope(this, previousBypass);
     }
-
-    public IDisposable UseSystemContext(Guid tenantId)
-    {
-        var previousBypass = _bypassTenantFilter;
-        _bypassTenantFilter = true;
-        _systemContext = new SystemContext(tenantId, SystemContextConfiguration.SystemUserId);
-        return new SystemContextScope(this, previousBypass);
-    }
     
     internal void ResetSystemContext(bool previousBypassValue)
     {

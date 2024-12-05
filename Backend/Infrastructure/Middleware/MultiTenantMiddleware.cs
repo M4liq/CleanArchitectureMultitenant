@@ -1,5 +1,6 @@
 using System.Net;
 using Application.Common.Core;
+using Application.Identity.Constants;
 using Microsoft.AspNetCore.Http;
 
 namespace Infrastructure.Middleware;
@@ -15,23 +16,18 @@ public class MultiTenantMiddleware : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var success = context.Request.Headers.TryGetValue("X-TenantId", out var tenantId);
-        
-        if (!success)
+        var tenantClaim = context.User.Claims.FirstOrDefault(x => x.Type == CustomClaimTypes.TenantId);
+        if (tenantClaim != null && Guid.TryParse(tenantClaim.Value, out var parsedTokenTenantId))
         {
-            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync("Could not get tenant id.");
+            _tenantProvider.SetTenant(parsedTokenTenantId);
+            await next(context);
             return;
         }
-
-        try
-        {
-            _tenantProvider.SetTenant(Guid.Parse(tenantId));
-        }
-        catch (Exception)
+        
+        if (context.User.Identity?.IsAuthenticated == true)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync("Invalid tenant id.");
+            await context.Response.WriteAsync("Tenant ID is required for authenticated requests.");
             return;
         }
         

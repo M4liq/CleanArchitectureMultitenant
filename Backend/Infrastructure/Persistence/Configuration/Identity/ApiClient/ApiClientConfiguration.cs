@@ -19,11 +19,9 @@ public class ApiClientConfiguration : BaseEntityConfiguration<ApiClientEntity>
             .IsRequired()
             .HasMaxLength(100);
         
-        builder.Property<List<string>>("_allowedScopes")
-            .HasColumnName("AllowedScopes")
-            .HasConversion(
-                v => string.Join(';', v),
-                v => v.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList())
-            .IsRequired();
+        builder.HasMany(x => x.Scopes)
+            .WithOne(x => x.ApiClient)
+            .HasForeignKey(x => x.ApiClientId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

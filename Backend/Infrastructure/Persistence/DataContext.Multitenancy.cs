@@ -23,7 +23,7 @@ public partial class DataContext
            var type = entityType.ClrType;
            ValidateEntityType(type);
            
-           if (type != typeof(TenantEntity))
+           if (typeof(BaseEntity).IsAssignableFrom(type) && type != typeof(TenantEntity))
            {
                var method = typeof(DataContext)
                    .GetMethod(nameof(SetTenantFilter), BindingFlags.NonPublic | BindingFlags.Instance)
@@ -49,10 +49,14 @@ public partial class DataContext
 
    private void ValidateEntityType(Type type)
    {
-       if (!typeof(BaseEntity).IsAssignableFrom(type) && type != typeof(TenantEntity))
+       var isValueObject = typeof(ValueObject).IsAssignableFrom(type);
+       var isBaseEntity = typeof(BaseEntity).IsAssignableFrom(type);
+       var isTenantEntity = type == typeof(TenantEntity);
+
+       if (!isValueObject && !isBaseEntity && !isTenantEntity)
        {
            throw new InvalidOperationException(
-               $"Entity {type.Name} must inherit from BaseEntity or be TenantEntity");
+               $"Entity {type.Name} must inherit from BaseEntity, be TenantEntity, or be a ValueObject");
        }
    }
 
@@ -77,8 +81,7 @@ public partial class DataContext
        throw new InvalidOperationException("Tenant must be specified");
 
    private Guid GetCurrentUserId() =>
-       _systemContext?.UserId ?? _currentUserService.UserId ??
-       throw new InvalidOperationException("User must be specified");
+       _systemContext?.UserId ?? _currentIdentityService.IdentityId;
 
    private record SystemContext(Guid TenantId, Guid UserId);
 }

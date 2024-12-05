@@ -11,32 +11,33 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
     where TResponse : BaseResponse, new()
 {
     private readonly ILogger<ValidationBehaviour<TRequest, TResponse>> _logger;
-    private readonly IDomainValidationHandler<TRequest> _validationHandler;
-    
-    public ValidationBehaviour(ILogger<ValidationBehaviour<TRequest, TResponse>> logger,
-        IDomainValidationHandler<TRequest> validationHandler)
+    private readonly IEnumerable<IValidationHandler<TRequest>> _validationHandlers;
+
+    public ValidationBehaviour(
+        ILogger<ValidationBehaviour<TRequest, TResponse>> logger,
+        IEnumerable<IValidationHandler<TRequest>> validationHandlers)
     {
         _logger = logger;
-        _validationHandler = validationHandler;
+        _validationHandlers = validationHandlers;
     }
-    
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
     {
         var requestName = request.GetType();
-        if (_validationHandler == null)
+        var validationHandler = _validationHandlers.FirstOrDefault();
+
+        if (validationHandler == null)
         {
-            _logger.LogInformation("{Request} does not have a validation handler configured.", requestName);
+            _logger.LogWarning("{Request} does not have a validation handler configured.", requestName);
             return await next();
         }
 
-        var result = await _validationHandler.Validate(request);
+        var result = await validationHandler.Validate(request, ct);
         if (!result.IsSuccessful)
         {
-            _logger.LogWarning("Validation failed for {Request}. Error: {Error}", requestName, result.ErrorMessages);
-            return new TResponse {StatusCode = HttpStatusCode.BadRequest, Messages = result.ErrorMessages.ToList()};
+            return new TResponse { StatusCode = HttpStatusCode.BadRequest, Messages = result.ErrorMessages.ToList() };
         }
 
-        _logger.LogInformation("Validation successful for {Request}.", requestName);
         return await next();
     }
 }

@@ -1,3 +1,4 @@
+using System.Net;
 using Domain.Common.Base;
 using FastEndpoints;
 
@@ -7,13 +8,23 @@ public abstract class BaseEndpoint<TRequest, TResponse> : Endpoint<TRequest, TRe
     where TRequest : notnull
     where TResponse : BaseResponse, new()
 {
-    public override void Configure()
+    public override async Task HandleAsync(TRequest req, CancellationToken ct)
     {
-        AllowAnonymous();
+        var response = await ExecuteAsync(req, ct);
+        await SendResponseAsync(response, ct);
     }
 
-    protected IResult ApiResponse(TResponse response)
+    protected abstract Task<TResponse> ExecuteAsync(TRequest req, CancellationToken ct);
+
+    private async Task SendResponseAsync(TResponse response, CancellationToken ct)
     {
-        return Results.Json(response, statusCode: (int)response.StatusCode);
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            await SendAsync(response, (int)response.StatusCode, cancellation: ct);
+        }
+        else
+        {
+            await SendAsync(response, (int)response.StatusCode, cancellation: ct);
+        }
     }
 }

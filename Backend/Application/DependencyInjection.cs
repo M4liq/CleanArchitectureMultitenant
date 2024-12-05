@@ -18,6 +18,7 @@ public static class DependencyInjection
 
         services.AddValidators();
         services.AddLogging();
+        services.AddApplicationServices();
         
         return services;
     }

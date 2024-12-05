@@ -17,18 +17,19 @@ public static class DependencyInjection
     public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.InitializeConfiguration(configuration);
-        services.AddApiKeyAndJwtAuthentication(configuration);
-        
+        services.AddJwtAuthentication(configuration);
+
         services.AddDbContext<DataContext>((sp, options) =>
         {
             var dataContextSettings = sp.GetRequiredService<IDataContextSettings>();
             options.UseSqlServer(
-                dataContextSettings.ConnectionString,
-                b => b.MigrationsAssembly("Infrastructure"));
+                    dataContextSettings.ConnectionString,
+                    b => b.MigrationsAssembly("Infrastructure"))
+                .UseLazyLoadingProxies();
         });
-        
+
         services.AddScoped<IDataContext>(provider => provider.GetService<DataContext>());
-        
+
         services.InitializeServices();
     }
 
@@ -36,27 +37,29 @@ public static class DependencyInjection
     {
         var databaseSettings = configuration.GetSection("DataContextSettings").Get<DataContextSettings>();
         services.AddSingleton<IDataContextSettings>(databaseSettings);
-        
+
         var smtpClientSettings = configuration.GetSection("SmtpClientSettings").Get<SmtpClientSettings>();
         services.AddSingleton<ISmtpClientSettings>(smtpClientSettings);
-        
-        var errorsAndMessagesSettings = configuration.GetSection("ErrorsAndMessagesSettings").Get<ErrorsAndMessagesSettings>();
+
+        var errorsAndMessagesSettings =
+            configuration.GetSection("ErrorsAndMessagesSettings").Get<ErrorsAndMessagesSettings>();
         services.AddSingleton<IErrorsAndMessagesSettings>(errorsAndMessagesSettings);
     }
 
     private static void InitializeServices(this IServiceCollection services)
     {
-        services.AddSingleton<IErrorManager, ErrorManager>();
-        services.AddSingleton<IMessageManager, MessageManager>();
-        services.AddSingleton<IRequestErrorManager, RequestErrorManager>();
-        
+        services.AddSingleton<IDomainMessageManager, DomainMessageManager>();
+
         services.AddScoped<IEmailClient, EmailClient>();
         services.AddScoped<ITenantProvider, TenantProvider>();
-        
+
         services.AddScoped<ICalendar, Calendar>();
-        services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<ICurrentIdentity, CurrentIdentity>();
+        services.AddSingleton<ICurrentLanguage, CurrentLanguage>();
+
         services.AddHttpContextAccessor();
-        
+
         services.AddScoped<MultiTenantMiddleware>();
+        services.AddScoped<LanguageMiddleware>();
     }
 }

@@ -3,19 +3,19 @@
 public abstract class BaseEntity : ITrackingEntity
 {
     public DateTimeOffset CreatedDate { get; private set; }
-    public Guid CreatedByUserId { get; private set; }
+    public Guid CreatedById { get; private set; }
     public Guid Id { get; private set; }
     public DateTimeOffset LastModifiedDate { get; private set; }
-    public Guid LastModifiedByUserId { get; private set; }
+    public Guid LastModifiedById { get; private set; }
     public Guid TenantId { get; set; }
     public bool IsDeleted { get; private set; }
-    public Guid? DeletedByUserId { get; private set; }
+    public Guid? DeletedById { get; private set; }
     public DateTimeOffset? DeletedDate { get; private set; }
     
     public void SetCreationTracking(Guid userId, DateTimeOffset createdDate, Guid tenantId)
     {
-        CreatedByUserId = userId;
-        LastModifiedByUserId = userId;
+        CreatedById = userId;
+        LastModifiedById = userId;
         CreatedDate = createdDate;
         LastModifiedDate = createdDate;
         TenantId = tenantId;
@@ -23,13 +23,13 @@ public abstract class BaseEntity : ITrackingEntity
 
     public void SetModificationTracking(Guid userId, DateTimeOffset modifiedDate)
     {
-        LastModifiedByUserId = userId;
+        LastModifiedById = userId;
         LastModifiedDate = modifiedDate;
     }
     
     public void SetDeletionTracking(Guid userId, DateTimeOffset deletedDate)
     {
-        DeletedByUserId = userId;
+        DeletedById = userId;
         DeletedDate = deletedDate;
         IsDeleted = true;
     }
@@ -37,7 +37,7 @@ public abstract class BaseEntity : ITrackingEntity
     public void Restore(Guid userId, DateTimeOffset restoredDate)
     {
         IsDeleted = false;
-        DeletedByUserId = null;
+        DeletedById = null;
         DeletedDate = null;
         SetModificationTracking(userId, restoredDate);
     }
