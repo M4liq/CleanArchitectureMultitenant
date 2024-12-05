@@ -17,7 +17,7 @@ public static class DependencyInjection
     public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.InitializeConfiguration(configuration);
-        services.AddApiKeyAndJwtAuthentication(configuration);
+        services.AddJwtAuthentication(configuration);
         
         services.AddDbContext<DataContext>((sp, options) =>
         {
@@ -46,17 +46,20 @@ public static class DependencyInjection
 
     private static void InitializeServices(this IServiceCollection services)
     {
-        services.AddSingleton<IErrorManager, ErrorManager>();
-        services.AddSingleton<IMessageManager, MessageManager>();
+        services.AddSingleton<IDomainMessageManager, DomainMessageManager>();
         services.AddSingleton<IRequestErrorManager, RequestErrorManager>();
         
         services.AddScoped<IEmailClient, EmailClient>();
         services.AddScoped<ITenantProvider, TenantProvider>();
         
         services.AddScoped<ICalendar, Calendar>();
-        services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<ICurrentIdentity, CurrentIdentity>();
+        services.AddSingleton<ICurrentLanguage, CurrentLanguage>();
+        
         services.AddHttpContextAccessor();
         
         services.AddScoped<MultiTenantMiddleware>();
+        services.AddScoped<LanguageMiddleware>();
+        
     }
 }

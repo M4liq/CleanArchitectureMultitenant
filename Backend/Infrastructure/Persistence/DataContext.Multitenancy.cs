@@ -1,5 +1,6 @@
 using System.Reflection;
 using Domain.Common.Base;
+using Domain.Identity;
 using Domain.Identity.Tenant;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,7 +78,7 @@ public partial class DataContext
        throw new InvalidOperationException("Tenant must be specified");
 
    private Guid GetCurrentUserId() =>
-       _systemContext?.UserId ?? _currentUserService.UserId ??
+       _systemContext?.UserId ?? _currentIdentityService.IdentityId ??
        throw new InvalidOperationException("User must be specified");
 
    private record SystemContext(Guid TenantId, Guid UserId);

@@ -6,19 +6,21 @@ public class ApiClientEntity : BaseEntity
 {
     public string Name { get; private set; }
     public string ApiKey { get; private set; }
+    public bool IsSystem { get; private set; }
     private List<string> _allowedScopes = new();
     
     public IReadOnlyCollection<string> AllowedScopes => _allowedScopes.AsReadOnly();
 
     private ApiClientEntity() { } // For EF
 
-    public static ApiClientEntity Create(string name, string apiKey, IEnumerable<Scope> allowedScopes)
+    public static ApiClientEntity Create(string name, string apiKey, IEnumerable<Scope> allowedScopes, bool isSystem)
     {
         return new ApiClientEntity
         {
             Name = name,
             ApiKey = apiKey,
-            _allowedScopes = allowedScopes.Select(s => s.Value).ToList()
+            _allowedScopes = allowedScopes.Select(s => s.Value).ToList(),
+            IsSystem = isSystem
         };
     }
 

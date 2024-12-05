@@ -6,5 +6,5 @@ public interface IDomainValidationHandler { }
 
 public interface IDomainValidationHandler<T> : IDomainValidationHandler
 {
-    Task<ValidationResult> Validate(T request);
+    Task<ValidationResult> Validate(T request, CancellationToken ct);
 }

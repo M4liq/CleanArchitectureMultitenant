@@ -11,7 +11,7 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
     where TResponse : BaseResponse, new()
 {
     private readonly ILogger<ValidationBehaviour<TRequest, TResponse>> _logger;
-    private readonly IDomainValidationHandler<TRequest> _validationHandler;
+    private readonly IDomainValidationHandler<TRequest>? _validationHandler;
     
     public ValidationBehaviour(ILogger<ValidationBehaviour<TRequest, TResponse>> logger,
         IDomainValidationHandler<TRequest> validationHandler)
@@ -29,7 +29,7 @@ public class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior<TReque
             return await next();
         }
 
-        var result = await _validationHandler.Validate(request);
+        var result = await _validationHandler.Validate(request, cancellationToken);
         if (!result.IsSuccessful)
         {
             _logger.LogWarning("Validation failed for {Request}. Error: {Error}", requestName, result.ErrorMessages);

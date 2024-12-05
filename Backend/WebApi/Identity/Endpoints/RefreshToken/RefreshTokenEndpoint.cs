@@ -40,7 +40,7 @@ public class RefreshTokenValidator : BaseValidator<RefreshTokenRequest>
     }
 }
 
-public class RefreshTokenEndpoint : BaseEndpoint<RefreshTokenRequest, RefreshToken.RefreshTokenResponse>
+public class RefreshTokenEndpoint : BaseEndpoint<RefreshTokenRequest, RefreshTokenHandler.RefreshTokenResponse>
 {
     private readonly IMediator _mediator;
 
@@ -58,21 +58,15 @@ public class RefreshTokenEndpoint : BaseEndpoint<RefreshTokenRequest, RefreshTok
             .WithTags("Identity")
             .WithDescription("Refreshes expired JWT token")
             .ProducesValidationProblem()
-            .Produces<RefreshToken.RefreshTokenResponse>(200, "application/json")
-            .Produces<RefreshToken.RefreshTokenResponse>(400, "application/json"));
+            .Produces<RefreshTokenHandler.RefreshTokenResponse>(200, "application/json")
+            .Produces<RefreshTokenHandler.RefreshTokenResponse>(400, "application/json"));
     }
-
-    public override async Task HandleAsync(RefreshTokenRequest req, CancellationToken ct)
+    
+    protected override async Task<RefreshTokenHandler.RefreshTokenResponse> ExecuteAsync(
+        RefreshTokenRequest req, 
+        CancellationToken ct)
     {
-        var command = new RefreshToken.RefreshTokenCommand(req.Token, req.RefreshToken);
-        var result = await _mediator.Send(command, ct);
-
-        await SendAsync(new RefreshToken.RefreshTokenResponse
-        {
-            Messages = result.Messages,
-            StatusCode = result.StatusCode,
-            Token = result.Token,
-            RefreshToken = result.RefreshToken
-        }, cancellation: ct);
+        var command = new RefreshTokenHandler.RefreshTokenCommand(req.Token, req.RefreshToken);
+        return await _mediator.Send(command, ct);
     }
 }

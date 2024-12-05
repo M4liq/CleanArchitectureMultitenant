@@ -13,25 +13,30 @@ public class MultiTenantMiddleware : IMiddleware
         _tenantProvider = tenantProvider;
     }
 
+    private const string TenantIdHeaderName = "X-TenantId";
+
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var success = context.Request.Headers.TryGetValue("X-TenantId", out var tenantId);
-        
-        if (!success)
+        if (context.Request.Headers.TryGetValue(TenantIdHeaderName, out var headerTenantId) &&
+            Guid.TryParse(headerTenantId, out var parsedHeaderTenantId))
         {
-            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync("Could not get tenant id.");
+            _tenantProvider.SetTenant(parsedHeaderTenantId);
+            await next(context);
             return;
         }
-
-        try
+        
+        var tenantClaim = context.User.Claims.FirstOrDefault(x => x.Type == "tenantId");
+        if (tenantClaim != null && Guid.TryParse(tenantClaim.Value, out var parsedTokenTenantId))
         {
-            _tenantProvider.SetTenant(Guid.Parse(tenantId));
+            _tenantProvider.SetTenant(parsedTokenTenantId);
+            await next(context);
+            return;
         }
-        catch (Exception)
+        
+        if (context.User.Identity?.IsAuthenticated == true)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync("Invalid tenant id.");
+            await context.Response.WriteAsync("Tenant ID is required for authenticated requests.");
             return;
         }
         

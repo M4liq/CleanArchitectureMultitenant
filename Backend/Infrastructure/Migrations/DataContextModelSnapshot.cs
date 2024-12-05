@@ -33,13 +33,13 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid>("CreatedByUserId")
+                    b.Property<Guid>("CreatedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("DeletedByUserId")
+                    b.Property<Guid?>("DeletedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("DeletedDate")
@@ -48,7 +48,10 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("LastModifiedByUserId")
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("LastModifiedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("LastModifiedDate")
@@ -76,19 +79,19 @@ namespace Infrastructure.Migrations
                     b.ToTable("ApiClients");
                 });
 
-            modelBuilder.Entity("Domain.Identity.RefreshToken.ApplicationRefreshTokensEntity", b =>
+            modelBuilder.Entity("Domain.Identity.RefreshToken.RefreshTokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("CreatedByUserId")
+                    b.Property<Guid>("CreatedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("DeletedByUserId")
+                    b.Property<Guid?>("DeletedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("DeletedDate")
@@ -107,7 +110,7 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("LastModifiedByUserId")
+                    b.Property<Guid>("LastModifiedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("LastModifiedDate")
@@ -122,18 +125,13 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("Used")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Id");
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("IdentityRefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Domain.Identity.Tenant.TenantEntity", b =>
@@ -157,19 +155,19 @@ namespace Infrastructure.Migrations
                     b.ToTable("Tenants");
                 });
 
-            modelBuilder.Entity("Domain.Identity.User.UserEntity", b =>
+            modelBuilder.Entity("Domain.Identity.UserIdentity.IdentityEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("CreatedByUserId")
+                    b.Property<Guid>("CreatedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("DeletedByUserId")
+                    b.Property<Guid?>("DeletedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("DeletedDate")
@@ -182,7 +180,7 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("LastModifiedByUserId")
+                    b.Property<Guid>("LastModifiedById")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("LastModifiedDate")
@@ -194,17 +192,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Domain.Identity.RefreshToken.ApplicationRefreshTokensEntity", b =>
-                {
-                    b.HasOne("Domain.Identity.User.UserEntity", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

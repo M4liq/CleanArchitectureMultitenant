@@ -8,17 +8,22 @@ namespace Infrastructure.Persistence;
 public partial class DataContext : DbContext, IDataContext
 {
    private readonly ICalendar _calendarService;
-   private readonly ICurrentUser _currentUserService;
+   private readonly ICurrentIdentity _currentIdentityService;
 
    public DataContext(
        DbContextOptions<DataContext> options,
        ITenantProvider tenantProvider,
        ICalendar calendarService,
-       ICurrentUser currentUserService) : base(options)
+       ICurrentIdentity currentIdentityService) : base(options)
    {
        _tenantProvider = tenantProvider;
        _calendarService = calendarService;
-       _currentUserService = currentUserService;
+       _currentIdentityService = currentIdentityService;
+   }
+
+   public DbSet<TEntity> Set<TEntity>() where TEntity : BaseEntity
+   {
+       return base.Set<TEntity>();
    }
 
    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

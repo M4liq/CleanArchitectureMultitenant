@@ -16,7 +16,7 @@ public abstract class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T> w
             .IsRequired();
 
         builder
-            .Property(_ => _.CreatedByUserId)
+            .Property(_ => _.CreatedById)
             .IsRequired();
 
         builder
@@ -24,7 +24,7 @@ public abstract class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T> w
             .IsRequired();
 
         builder
-            .Property(_ => _.LastModifiedByUserId)
+            .Property(_ => _.LastModifiedById)
             .IsRequired();
 
         builder.Property(_ => _.TenantId)

@@ -13,4 +13,26 @@ public static class DependencyInjectionExtensions
             .AsImplementedInterfaces()
             .WithTransientLifetime());
     }
+    
+    public static void AddApplicationServices(this IServiceCollection services)
+    {
+        var applicationAssembly = typeof(IBoundedService).Assembly;
+
+        var serviceTypes = applicationAssembly
+            .GetTypes()
+            .Where(t =>
+                !t.IsAbstract &&
+                !t.IsInterface &&
+                t.GetInterfaces()
+                    .Any(i => i.IsAssignableTo(typeof(IBoundedService))));
+
+        foreach (var serviceType in serviceTypes)
+        {
+            var serviceInterface = serviceType.GetInterfaces()
+                .First(i => i != typeof(IBoundedService) &&
+                            i.IsAssignableTo(typeof(IBoundedService)));
+
+            services.AddScoped(serviceInterface, serviceType);
+        }
+    }
 }

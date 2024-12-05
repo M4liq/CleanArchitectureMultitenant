@@ -4,7 +4,7 @@ namespace Domain.Identity.Tenant;
 
 public static class TenantDomainErrors
 {
-    public class TenantWithSuchNameAlreadyExists : IDomainError
+    public class TenantWithSuchNameAlreadyExists : IDomainMessage
     {
         public string Code { get; init; } = nameof(TenantWithSuchNameAlreadyExists);
         public string DefaultMessagePl { get; init; } = "Tenant o podanym identyfikatorze już istnieje.";

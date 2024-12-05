@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Application;
+using Domain.Identity;
 using Domain.Identity.ApiClient;
 using FastEndpoints;
 using FastEndpoints.Swagger;
@@ -9,7 +10,6 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.OpenApi.Models;
 using NSwag;
 
 namespace WebApi;
@@ -25,15 +25,6 @@ public class Program
         builder.Services.SwaggerDocument(o =>
         {
             o.EnableJWTBearerAuth = true;
-            o.DocumentSettings = s =>
-            {
-                s.AddAuth("ApiKey", new()
-                {
-                    Name = "X-Api-Key",
-                    In = OpenApiSecurityApiKeyLocation.Header,
-                    Type = OpenApiSecuritySchemeType.ApiKey,
-                });
-            };
         });
         
         builder.Services.AddApplication();
@@ -53,6 +44,7 @@ public class Program
         app.UseAuthorization();
 
         app.UseMiddleware<MultiTenantMiddleware>();
+        app.UseMiddleware<LanguageMiddleware>();
 
         app.UseFastEndpoints(c =>
         {
@@ -85,8 +77,7 @@ public class Program
                 logger.LogInformation("Database instance does not exist. Creating new one ...");
                 context.Database.Migrate();
                 logger.LogInformation("Database created successfully.");
-
-                // Seed default API client
+                
                 CreateDefaultApiClient(context, logger);
             }
             else
@@ -112,7 +103,8 @@ public class Program
                 var defaultClient = ApiClientEntity.Create(
                     "Default System Client",
                     apiKey,
-                    allScopes
+                    allScopes,
+                    true
                 );
 
                 context.Set<ApiClientEntity>().Add(defaultClient);

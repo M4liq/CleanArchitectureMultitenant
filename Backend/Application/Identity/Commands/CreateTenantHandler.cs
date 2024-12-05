@@ -13,21 +13,22 @@ public static class CreateTenant
 
     public class Validator : IDomainValidationHandler<CreateTenantCommand>
     {
-        private readonly IErrorManager _errorManager;
+        private readonly IDomainMessageManager _domainMessageManager;
         private readonly IDataContext _dataContext;
+        
 
-        public Validator(IErrorManager errorManager, IDataContext dataContext)
+        public Validator(IDomainMessageManager domainMessageManager, IDataContext dataContext)
         {
-            _errorManager = errorManager;
+            _domainMessageManager = domainMessageManager;
             _dataContext = dataContext;
         }
 
-        public async Task<ValidationResult> Validate(CreateTenantCommand request)
+        public async Task<ValidationResult> Validate(CreateTenantCommand request, CancellationToken ct)
         {
-            if (await _dataContext.Tenants.AnyAsync(_ => _.Name == request.Name))
+            if (await _dataContext.Tenants.AnyAsync(tenant => tenant.Name == request.Name, cancellationToken: ct))
             {
-                return await _errorManager
-                    .GetValidationResultForErrorAsync<TenantDomainErrors.TenantWithSuchNameAlreadyExists>();
+                return await _domainMessageManager
+                    .GetValidationResultAsync<TenantDomainErrors.TenantWithSuchNameAlreadyExists>(ct);
             }
 
             return new ValidationResult();
@@ -37,10 +38,12 @@ public static class CreateTenant
     public class Handler : IRequestHandler<CreateTenantCommand, CreateTenantResponse>
     {
         private readonly IDataContext _dataContext;
+        private readonly ICalendar _calendar;
 
-        public Handler(IDataContext dataContext)
+        public Handler(IDataContext dataContext, ICalendar calendar)
         {
             _dataContext = dataContext;
+            _calendar = calendar;
         }
 
         public async Task<CreateTenantResponse> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
@@ -48,7 +51,8 @@ public static class CreateTenant
             var tenant = new TenantEntity
             {
                 Name = request.Name,
-                IsActive = true
+                IsActive = true,
+                CreatedAt = _calendar.UtcNow
             };
 
             _dataContext.Tenants.Add(tenant);
